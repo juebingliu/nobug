@@ -1,5 +1,10 @@
 package com.dbpf.nobug.controller;
 
+import com.dbpf.nobug.common.dto.DataMsg;
+import com.dbpf.nobug.common.enums.ErrorEnum;
+import com.dbpf.nobug.database.dto.SysUser;
+import com.dbpf.nobug.service.UserService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.ExcessiveAttemptsException;
@@ -8,6 +13,7 @@ import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,6 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class IndexController {
 
+    @Autowired
+    private UserService userService;
+
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     @ResponseBody
     public String defaultLogin() {
@@ -32,6 +41,7 @@ public class IndexController {
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
     public String login(@RequestParam("username") String username, @RequestParam("password") String password) {
+        DataMsg dataMsg = new DataMsg();
         // 从SecurityUtils里边创建一个 subject
         Subject subject = SecurityUtils.getSubject();
         // 在认证提交前准备 token（令牌）
@@ -39,6 +49,11 @@ public class IndexController {
         // 执行认证登陆
         try {
             subject.login(token);
+            SysUser sysUser = userService.findSysUserByUserName(StringUtils.trim(username));
+            if(null != sysUser) {
+                dataMsg.setRes_code(ErrorEnum.RES_0000.getErrorCode());
+                dataMsg.setRes_msg(ErrorEnum.RES_0000.getErrorMsg());
+            }
         } catch (UnknownAccountException uae) {
             return "未知账户";
         } catch (IncorrectCredentialsException ice) {

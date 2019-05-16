@@ -1,8 +1,8 @@
-package com.dbpf.nobug.config;
+package com.dbpf.nobug.config.shiro;
 
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
-import org.apache.shiro.mgt.SecurityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -51,6 +51,12 @@ public class ShiroConfig {
     @Bean
     public CustomRealm customRealm() {
         CustomRealm customRealm = new CustomRealm();
+        customRealm.setCredentialsMatcher(credentialsMatcher());
         return customRealm;
+    }
+
+    @Bean
+    public RetryLimitSimpleCredentialsMatcher credentialsMatcher() {
+        return new RetryLimitSimpleCredentialsMatcher();
     }
 }
