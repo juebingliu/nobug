@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dbpf.nobug.database.mapper.AuthorizationMapper" >
+	<!-- 根据用户ID获取菜单 -->
+	<select id="findMenusByUserId" parameterType="Integer" resultType="com.dbpf.nobug.database.dto.Menu">
+		SELECT DISTINCT
+			sp.id,
+			sp.permission_tag as permissionTag,
+			sp.permission_name as permissionName,
+			sp.permission_type as permissionType,
+			sp.permission_uri as permissionUri,
+			sp.permission_icon as permissionIcon,
+			sp.parent_id as parentId
+		FROM
+			sys_user_role_ref surr
+		JOIN sys_role_permission_ref srpr ON srpr.role_id = surr.role_id
+		JOIN sys_permission sp ON sp.id = srpr.permission_id
+		WHERE
+			surr.user_id = #{userId}
+		AND sp.permission_type != 3
+		order by sp.permission_type asc,sp.order_num asc
+	</select>
+	
+	<select id="findAuthInfos" parameterType="map" resultType="com.dbpf.nobug.database.dto.AuthInfo">
+		SELECT
+			surf.id,
+			surf.creater,
+			surf.create_time as createTime,
+			surf.user_id AS userId,
+			surf.role_id AS roleId,
+			sr.system_tag AS systemTag,
+			sr.role_code AS roleCode,
+			sr.role_name AS roleName
+		FROM
+			sys_user_role_ref surf
+		LEFT JOIN sys_role sr ON sr.id = surf.role_id
+		WHERE
+			1 = 1
+		<if test="userId !='' and userId != null">
+			AND surf.user_id = #{userId}
+		</if>
+		<if test="roleName !='' and roleName != null">
+			AND sr.role_name like concat ('%', #{roleName},'%')
+		</if>
+		
+		order by surf.create_time desc
+	</select>
+	
+	<select id="queryRoleByUserId" parameterType="Integer"  resultType="String">
+		SELECT
+			DISTINCT sr.role_code
+		FROM
+			sys_role sr
+		LEFT JOIN sys_user_role_ref surr ON surr.role_id = sr.id
+		WHERE
+			surr.user_id =  #{userId}
+	</select>
+	
+	<select id="queryPermissionByUserId" parameterType="Integer"  resultType="String">
+		SELECT
+			DISTINCT sp.permission_tag
+		FROM
+			sys_permission sp
+		LEFT JOIN sys_role_permission_ref srpr on srpr.permission_id=sp.id
+		LEFT JOIN sys_user_role_ref surr ON surr.role_id = srpr.role_id
+		LEFT JOIN sys_user su on  su.id = surr.user_id
+		WHERE
+			su.id= #{userId}
+	</select>
+	
+	<select id="findSysUserByUsername" parameterType="String"  resultType="com.dbpf.nobug.database.dto.SysUser">
+		SELECT
+			sur.id,
+			sur.username,
+			sur.`password`,
+			sur.salt_key AS saltKey,
+			sur.real_name AS realName,
+			sur.user_code AS userCode,
+			sur.user_status AS userStatus,
+			sur.sex,
+			sur.mobile,
+			sur.email,
+			sur.card_type AS cardType,
+			sur.card_no AS cardNo,
+			sur.last_login_ip AS lastLoginIp,
+			sur.last_login_time AS lastLoginTime
+		FROM
+			sys_user sur
+		WHERE
+			sur.username =  #{username}
+	</select>
+	
+	
+	<select id="findCusUserByAccount" parameterType="String"  resultType="com.dbpf.nobug.database.dto.CusUser">
+		SELECT
+			FCI.customer_no as customerNo,
+			FCI.email,
+			FCI.password,
+			FCI.mobile_no as mobileNo,
+			FCI.acc_status as accStatus,
+			FCI.activation_state as activationState,
+			FCI.salt_key as saltKey
+		FROM
+			FQ_CUSTOMER_INFO FCI
+		WHERE 
+			(FCI.email=#{account}) or (FCI.mobile_no=#{account}) 
+	</select>
+</mapper>
