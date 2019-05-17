@@ -7,9 +7,7 @@ import com.dbpf.nobug.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.ExcessiveAttemptsException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
-import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
@@ -20,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
-
-import java.util.HashMap;
 
 /**
  * @author juebing
@@ -38,17 +34,12 @@ public class IndexController {
     @RequestMapping(value = "/to/login")
     public ModelAndView defaultLogin() {
         ModelAndView modelAndView = new ModelAndView("login");
-        modelAndView.addAllObjects(new HashMap<String, String>(){
-            {
-                this.put("name","Andy");
-            }
-        });
         return modelAndView;
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
-    public String login(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public DataMsg login(@RequestParam("username") String username, @RequestParam("password") String password) {
         DataMsg dataMsg = new DataMsg();
         // 从SecurityUtils里边创建一个 subject
         Subject subject = SecurityUtils.getSubject();
@@ -61,23 +52,30 @@ public class IndexController {
             if(null != sysUser) {
                 dataMsg.setRes_code(ErrorEnum.RES_0000.getErrorCode());
                 dataMsg.setRes_msg(ErrorEnum.RES_0000.getErrorMsg());
+                return dataMsg;
             }
         } catch (UnknownAccountException uae) {
-            return "未知账户";
+            dataMsg.setRes_code(ErrorEnum.RES_0001.getErrorCode());
+            dataMsg.setRes_msg("未知账户");
+            return dataMsg;
         } catch (IncorrectCredentialsException ice) {
-            return "密码不正确";
-        } catch (LockedAccountException lae) {
-            return "账户已锁定";
-        } catch (ExcessiveAttemptsException eae) {
-            return "用户名或密码错误次数过多";
-        } catch (AuthenticationException ae) {
-            return "用户名或密码不正确！";
+            dataMsg.setRes_code(ErrorEnum.RES_0001.getErrorCode());
+            dataMsg.setRes_msg("密码不正确");
+            return dataMsg;
+        }  catch (AuthenticationException ae) {
+            dataMsg.setRes_code(ErrorEnum.RES_0001.getErrorCode());
+            dataMsg.setRes_msg("用户名或密码不正确");
+            return dataMsg;
         }
         if (subject.isAuthenticated()) {
-            return "登录成功";
+            dataMsg.setRes_code(ErrorEnum.RES_0000.getErrorCode());
+            dataMsg.setRes_msg(ErrorEnum.RES_0000.getErrorMsg());
+            return dataMsg;
         } else {
+            dataMsg.setRes_code(ErrorEnum.RES_0001.getErrorCode());
+            dataMsg.setRes_msg(ErrorEnum.RES_0001.getErrorMsg());
             token.clear();
-            return "登录失败";
+            return dataMsg;
         }
     }
 }
